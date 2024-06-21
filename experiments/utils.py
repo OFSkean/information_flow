@@ -29,7 +29,7 @@ def get_model_path(name, size):
         return f"meta-llama/Meta-Llama-3-8B"
         #return "RLHFlow/ArmoRM-Llama3-8B-v0.1"  #using this finetuned version until i get baseline llama access
 
-def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=1, min_length=5, max_length=None, num_samples=10000):
+def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=1, min_length=5, max_length=None, num_samples=10000, filter_text_columns=True):
     def wikitext_tokenize_function(examples):
         return tokenizer(examples["text"], truncation=True, max_length=2048)
     def medical_tokenize_function(examples):
@@ -82,7 +82,9 @@ def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=
         tokenized_dataset.set_format("torch")
         
         tokenized_dataset = tokenized_dataset.filter(is_not_wikipedia_heading) # filter out headings
-        tokenized_dataset = tokenized_dataset.remove_columns(["text"])
+        
+        if filter_text_columns:
+            tokenized_dataset = tokenized_dataset.remove_columns(["text"])
 
     elif dataset_name == 'ai-medical-dataset':
         dataset = load_dataset("ruslanmv/ai-medical-dataset")[split]
@@ -95,8 +97,9 @@ def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=
         tokenized_dataset = dataset.map(medical_tokenize_function, batched=True).shuffle(seed=42)
         tokenized_dataset.set_format("torch")
 
-        tokenized_dataset = tokenized_dataset.remove_columns(["question"])
-        tokenized_dataset = tokenized_dataset.remove_columns(["context"])
+        if filter_text_columns:
+            tokenized_dataset = tokenized_dataset.remove_columns(["question"])
+            tokenized_dataset = tokenized_dataset.remove_columns(["context"])
 
     # filter out samples by lower bound and upper bound on length
     tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) >= min_length) # filter out the frequent blank/small examples in the dataset
