@@ -43,6 +43,7 @@ class LLM2Vec(nn.Module):
         max_length: int = 512,
         doc_max_length: int = 400,
         skip_instruction: bool = True,
+        layer_cutoff: int = -1,
     ):
         super().__init__()
         self.model = model
@@ -52,6 +53,7 @@ class LLM2Vec(nn.Module):
         self.max_length = max_length
         self.doc_max_length = doc_max_length
         self.config = model.config
+        self.layer_cutoff = layer_cutoff
 
     @classmethod
     def _get_model_class(cls, config_class_name, enable_bidirectional):
@@ -83,6 +85,14 @@ class LLM2Vec(nn.Module):
             key: kwargs.pop(key, None) for key in keys if kwargs.get(key) is not None
         }
 
+        # check if we should output hidden_states and do layer cutoff
+        if 'layer_cutoff' in kwargs.keys():
+            should_return_hidden_states = True
+            layer_cutoff = kwargs.pop('layer_cutoff')
+        else:
+            should_return_hidden_states = True
+            layer_cutoff = -1
+
         tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path)
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "left"
@@ -93,7 +103,9 @@ class LLM2Vec(nn.Module):
         model_class = cls._get_model_class(
             config_class_name, enable_bidirectional=enable_bidirectional
         )
-        model = model_class.from_pretrained(base_model_name_or_path, **kwargs)
+        model = model_class.from_pretrained(base_model_name_or_path, 
+                                            output_hidden_states=should_return_hidden_states,
+                                            **kwargs)
 
         # For special case where config.json and adapter weights are in the same directory
         if hasattr(model, "peft_config"):
@@ -124,6 +136,7 @@ class LLM2Vec(nn.Module):
 
         for key, value in encoder_args.items():
             config[key] = value
+        config['layer_cutoff'] = layer_cutoff
 
         return cls(model=model, tokenizer=tokenizer, **config)
 
@@ -204,10 +217,13 @@ class LLM2Vec(nn.Module):
         embed_mask = None
         if "embed_mask" in sentence_feature:
             embed_mask = sentence_feature.pop("embed_mask")
-        reps = self.model(**sentence_feature)
+        outputs = self.model(**sentence_feature)
         sentence_feature["embed_mask"] = embed_mask
 
-        return self.get_pooling(sentence_feature, reps.last_hidden_state)
+        if self.layer_cutoff == -1:
+            return self.get_pooling(sentence_feature, outputs.last_hidden_state)
+        else:
+            return self.get_pooling(sentence_feature, outputs.hidden_states[self.layer_cutoff])
 
     def get_pooling(self, features, last_hidden_states):  # All models padded from left
         assert (
