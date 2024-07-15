@@ -92,7 +92,6 @@ def _loader(wrapper: Type[LLM2VecWrapper], **kwargs) -> Callable[..., Encoder]:
 
     return loader_inner
 
-
 llm2vec_llama3_8b_supervised = ModelMeta(
     loader=_loader(
         LLM2VecWrapper,
@@ -137,3 +136,33 @@ baseline_llama3 = ModelMeta(
     revision=None,
     release_date="2024-04-09",
 )
+
+unidirectional_llama3 = ModelMeta(
+    loader=_loader(
+        LLM2VecWrapper,
+        base_model_name_or_path="meta-llama/Meta-Llama-3-8B",
+        peft_model_name_or_path=None,
+        device_map="auto",
+        torch_dtype=torch.bfloat16,
+        enable_bidirectional=False,
+    ),
+    name="meta-llama/Meta-Llama-3-8B",
+    languages=["eng_Latn"],
+    open_source=True,
+    revision=None,
+    release_date="2024-04-09",
+)
+
+def convert_model_name_to_loader(model_name: str):
+    model_name_to_model = {
+        'unidirectional-llama': unidirectional_llama3,
+        'baseline-llama': baseline_llama3,
+        'llm2vec-unsupervised': llm2vec_llama3_8b_unsupervised,
+        'llm2vec-supervised': llm2vec_llama3_8b_supervised,
+        
+    }
+
+    if model_name in model_name_to_model:
+        return model_name_to_model[model_name]
+    else:
+        raise ValueError(f"Unknown model name: {model_name}, valid choices are {model_name_to_model.keys()}")
