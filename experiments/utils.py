@@ -2,7 +2,12 @@ import math
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
 import torch
-
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import numpy as np
+import umap
+import tqdm
+import warnings
 
 datasets = ['wikitext', 'ai-medical-dataset']
 model_types = ["cerebras", "EleutherAI", "Medical-Llama3", "Llama3"]
@@ -121,3 +126,75 @@ def normalize(R):
         norms = torch.norm(R, p=2, dim=1, keepdim=True)
         R = R/norms
     return R
+
+
+def embed_sentences_and_get_outputs(model, tokenizer, sentences: list[str]):
+    tokenized_string= tokenizer(sentences, truncation=False, return_tensors='pt')
+    tokenized_string = {k: v.to(model.device) for k, v in tokenized_string.items()}
+    with torch.no_grad():
+        outputs = model(**tokenized_string)
+    
+    outputs['input_ids'] = list(tokenized_string['input_ids'])
+    return outputs
+
+
+def reduce_and_visualize_hidden_states(hidden_states, reduction="tsne", labels=None):
+    assert reduction in ["tsne", "umap"]
+    warnings.filterwarnings(action='ignore', category=UserWarning)
+
+    layers_per_row = 5
+    column_width, row_height = 3, 3
+
+    num_layers = len(hidden_states)
+    num_rows = math.ceil(num_layers / layers_per_row)
+    fig, axs = plt.subplots(num_rows, layers_per_row, figsize=(row_height*layers_per_row, column_width*num_rows))
+    num_tokens = hidden_states[0].shape[1]
+
+    print("NUM LAYERS", num_layers)
+
+    # reduce and plot hidden states at each layer
+    # go in reverse to make sure that dimensionality reduction has good initialization
+    reduced_embeddings_by_layer = []
+    for i in tqdm.tqdm(list(reversed(range(num_layers)))):
+        row, col = divmod(i, layers_per_row)
+
+        layer_hidden_states = hidden_states[i].squeeze().cpu().numpy()
+
+        if reduction == "tsne":
+            if len(reduced_embeddings_by_layer):
+                # for some consistency between layers
+                tsne_reducer = TSNE(n_components=2, perplexity=20, random_state=0, metric="cosine", init=reduced_embeddings_by_layer[-1])
+            else:
+                tsne_reducer = TSNE(n_components=2, perplexity=20, random_state=0, metric="cosine", init="pca")
+            reduced_results = tsne_reducer.fit_transform(layer_hidden_states)
+            reduced_embeddings_by_layer.append(reduced_results)
+        elif reduction == "umap":
+            if len(reduced_embeddings_by_layer):
+                # for some consistency between layers
+                umap_reducer = umap.UMAP(n_components=2, n_neighbors=5, random_state=0, init=reduced_embeddings_by_layer[-1])
+            else:
+                umap_reducer = umap.UMAP(n_components=2, n_neighbors=5, random_state=0, init="spectral")
+            reduced_results = umap_reducer.fit_transform(layer_hidden_states)
+            reduced_embeddings_by_layer.append(reduced_results)
+
+        if labels is None:          
+            colors = np.array(list(range(num_tokens)))
+        else:
+            colors = labels
+        
+        # plot reduced embeddings
+        axs[row][col].scatter(reduced_results[:, 0], reduced_results[:, 1], c=colors, cmap="viridis")
+        axs[row][col].text(0.95, 0.95, f"Layer {i}", transform=axs[row][col].transAxes, ha="left", va="top") # put row number in corner
+        axs[row][col].axis("off")   # hide axes
+
+
+    # hide empty plots
+    for i in range(num_layers, num_rows*layers_per_row):
+        row, col = divmod(i, layers_per_row)
+        axs[row][col].axis("off")
+
+    fig.show()
+
+    # unreverse the reduced embeddings
+    reduced_embeddings_by_layer = list(reversed(reduced_embeddings_by_layer))
+    return reduced_embeddings_by_layer
