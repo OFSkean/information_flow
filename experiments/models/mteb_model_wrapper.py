@@ -159,7 +159,6 @@ def convert_model_name_to_loader(model_name: str):
         'baseline-llama': baseline_llama3,
         'llm2vec-unsupervised': llm2vec_llama3_8b_unsupervised,
         'llm2vec-supervised': llm2vec_llama3_8b_supervised,
-        
     }
 
     if model_name in model_name_to_model:

@@ -10,12 +10,24 @@ import tqdm
 import warnings
 
 datasets = ['wikitext', 'ai-medical-dataset']
-model_types = ["cerebras", "EleutherAI", "Medical-Llama3", "Llama3"]
+model_types = ["cerebras", "EleutherAI", "mamba", "mamba2", "Medical-Llama3", "Llama3"]
 
-cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B',] # '6.7B', '13B' also exist, but dont fit in 24G
-EleutherAI_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b',]  # '6.9b', '12b' also exist, but dont fit in 24G
+cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B', '6.7B', '13B'] # '13b' also exists but doesnt fit in 24G for bfloat16
+EleutherAI_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b', '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
+mamba_sizes = ['130m', '370m', '790m', '1.4b', '2.8b']
+mamba2_sizes = ['130m', '370m', '780m', '1.3b', '2.7b']
 medical_llama3_sizes = ['8B'] # its only 8B model
 llama3_sizes = ['8B'] 
+
+model_name_to_sizes = {
+    'EleutherAI': EleutherAI_sizes,
+    'cerebras': cerebras_sizes,
+    'mamba': mamba_sizes,
+    'mamba2': mamba2_sizes,
+    'Medical-Llama3': medical_llama3_sizes,
+    'Llama3': llama3_sizes
+}
+
 
 def get_model_path(name, size):
     assert name in model_types
@@ -32,11 +44,33 @@ def get_model_path(name, size):
     elif name == "Llama3":
         assert size in llama3_sizes
         return f"meta-llama/Meta-Llama-3-8B"
-        #return "RLHFlow/ArmoRM-Llama3-8B-v0.1"  #using this finetuned version until i get baseline llama access
+    elif name == "mamba":
+        assert size in mamba_sizes
+        return f"state-spaces/mamba-{size}-hf"
+    elif name == "mamba2":
+        assert size in mamba2_sizes
+        return f"state-spaces/mamba2-{size}-hf"        
 
-def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=1, min_length=5, max_length=None, num_samples=10000, filter_text_columns=True):
+def get_dataloader(
+        tokenizer, 
+        dataset_name, 
+        split='train', 
+        context_length_ratio=1, 
+        min_length=5,
+        max_length=None, 
+        num_samples=10000, 
+        filter_text_columns=True, 
+        augment=False,
+        return_dataset=False
+    ):
+    
     def wikitext_tokenize_function(examples):
-        return tokenizer(examples["text"], truncation=True, max_length=2048)
+        if not augment:
+            texts = examples["text"]
+        else:
+            texts = text_augmentation(examples["text"]) 
+        return tokenizer(texts, truncation=True, max_length=2048)
+    
     def medical_tokenize_function(examples):
         medical_prompt = """You are an AI Medical Assistant Chatbot, trained to answer medical questions. Below is an instruction that describes a task, paired with an response context. Write a response that appropriately completes the request.
 
@@ -81,12 +115,21 @@ def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=
         # filter out unneeded samples
         num_samples = min(num_samples, len(dataset))
         dataset = dataset.select(range(num_samples))
+        dataset = dataset.filter(is_not_wikipedia_heading) # filter out headings
         
+        # filter out samples by lower bound and upper bound on length
+        dataset = dataset.filter(lambda x: len(x['text']) >= 2*min_length) # filter out the frequent blank/small examples in the dataset
+        if max_length is not None:
+            dataset = dataset.filter(lambda x: len(x['text']) <= 2*max_length)
+
         # tokenize the dataset
-        tokenized_dataset = dataset.map(wikitext_tokenize_function, batched=True).shuffle(seed=42)
-        tokenized_dataset.set_format("torch")
-        
-        tokenized_dataset = tokenized_dataset.filter(is_not_wikipedia_heading) # filter out headings
+        try:
+            tokenized_dataset = dataset.map(wikitext_tokenize_function, batched=True).shuffle(seed=42)
+            tokenized_dataset.set_format("torch")
+        except Exception as e:
+            for idx, d in enumerate(dataset):
+                print(idx, d)
+            raise e
         
         if filter_text_columns:
             tokenized_dataset = tokenized_dataset.remove_columns(["text"])
@@ -106,17 +149,54 @@ def get_dataloader(tokenizer, dataset_name, split='train', context_length_ratio=
             tokenized_dataset = tokenized_dataset.remove_columns(["question"])
             tokenized_dataset = tokenized_dataset.remove_columns(["context"])
 
-    # filter out samples by lower bound and upper bound on length
-    tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) >= min_length) # filter out the frequent blank/small examples in the dataset
-    if max_length is not None:
-        tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) <= max_length)
+        # filter out samples by lower bound and upper bound on length
+        tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) >= min_length) # filter out the frequent blank/small examples in the dataset
+        if max_length is not None:
+            tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) <= max_length)
 
     # if context_length_ratio < 1, reduce all sentences to that ratio of length
     tokenized_dataset = tokenized_dataset.map(adjust_context_length, batched=False)
 
+    if return_dataset:
+        return tokenized_dataset
+    
     # form dataloader
-    dataloader = DataLoader(tokenized_dataset, shuffle=False, drop_last=True) # something is weird with batch_size=x argument here, removing it for now
+    dataloader = DataLoader(tokenized_dataset, shuffle=False) # something is weird with batch_size=x argument here, removing it for now
     return dataloader
+
+def get_augmentation_collated_dataloader(
+        tokenizer, 
+        dataset_name, 
+        split='train',
+        num_augmentations_per_sample=8,
+        context_length_ratio=1, 
+        min_length=2,
+        max_length=None, 
+        num_samples=10000, 
+        filter_text_columns=True
+    ):
+
+    base_datasets = [
+        get_dataloader(
+            tokenizer, 
+            dataset_name, 
+            split=split, 
+            context_length_ratio=context_length_ratio, 
+            min_length=min_length,
+            max_length=max_length, 
+            num_samples=num_samples, 
+            filter_text_columns=filter_text_columns, 
+            augment=True,
+            return_dataset=True
+        ) for _ in range(num_augmentations_per_sample)
+    ]
+
+    lengths = [len(d) for d in base_datasets]
+    assert all([l == lengths[0] for l in lengths])
+
+    dataset_iterator = zip(*base_datasets)
+
+    return dataset_iterator
 
 # from https://github.com/waltonfuture/Matrix-Entropy
 def normalize(R):
@@ -198,3 +278,54 @@ def reduce_and_visualize_hidden_states(hidden_states, reduction="tsne", labels=N
     # unreverse the reduced embeddings
     reduced_embeddings_by_layer = list(reversed(reduced_embeddings_by_layer))
     return reduced_embeddings_by_layer
+
+def text_augmentation(texts, num_augmentations_per_sample=1):
+    # input is list of strings
+    import nlpaug.augmenter.char as nac
+    import nlpaug.augmenter.word as naw
+    import nlpaug.augmenter.sentence as nas
+    import nlpaug.flow as naf
+
+    aug = naf.Sequential([
+        naw.SplitAug(),
+        nac.RandomCharAug(),
+        nac.KeyboardAug()
+    ])
+
+    augmented_text = [str(aug.augment(x, n=num_augmentations_per_sample)) for x in texts]
+
+    return augmented_text
+
+
+# Implements LDA matrix as defined in LIDAR paper (https://arxiv.org/pdf/2312.04000)
+def compute_LDA_matrix(augmented_prompt_tensors):
+    # augmented_prompt_tensors is tensor that is NUM_SAMPLES x NUM_AUGMENTATIONS x D
+    NUM_SAMPLES, NUM_AUGMENTATIONS, D = augmented_prompt_tensors.shape
+
+    delta = 1e-4
+
+    dataset_mean = torch.mean(augmented_prompt_tensors, dim=(0, 1)).squeeze() # D
+    class_means = torch.mean(augmented_prompt_tensors, dim=1) # NUM_SAMPLES x D
+
+
+    # Equation 1 in LIDAR paper
+    between_class_scatter = torch.zeros((D, D)).to(augmented_prompt_tensors.device)
+    for i in range(NUM_SAMPLES):
+        between_class_scatter += torch.outer(class_means[i] - dataset_mean, class_means[i] - dataset_mean)
+    between_class_scatter /= NUM_SAMPLES
+
+    # Equation 2 in LIDAR paper
+    within_class_scatter = torch.zeros((D, D)).to(augmented_prompt_tensors.device)
+    for i in range(NUM_SAMPLES):
+        for j in range(NUM_AUGMENTATIONS):
+            within_class_scatter += torch.outer(augmented_prompt_tensors[i, j] - class_means[i], augmented_prompt_tensors[i, j] - class_means[i])
+    within_class_scatter /= (NUM_SAMPLES * NUM_AUGMENTATIONS)
+    within_class_scatter += delta * torch.eye(D).to(augmented_prompt_tensors.device)
+
+    # Equation 3 in LIDAR paper
+    eigs, eigvecs = torch.linalg.eigh(within_class_scatter)
+    within_sqrt = torch.diag(eigs**(-0.5))
+    fractional_inverse = eigvecs @ within_sqrt @ eigvecs.T
+    LDA_matrix = fractional_inverse @ between_class_scatter @ fractional_inverse
+
+    return LDA_matrix
