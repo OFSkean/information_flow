@@ -161,7 +161,7 @@ def get_dataloader(
         return tokenized_dataset
     
     # form dataloader
-    dataloader = DataLoader(tokenized_dataset, shuffle=False) # something is weird with batch_size=x argument here, removing it for now
+    dataloader = DataLoader(tokenized_dataset, shuffle=False, num_workers=16) # something is weird with batch_size=x argument here, removing it for now
     return dataloader
 
 def get_augmentation_collated_dataloader(
@@ -298,7 +298,7 @@ def text_augmentation(texts, num_augmentations_per_sample=1):
 
 
 # Implements LDA matrix as defined in LIDAR paper (https://arxiv.org/pdf/2312.04000)
-def compute_LDA_matrix(augmented_prompt_tensors):
+def compute_LDA_matrix(augmented_prompt_tensors, return_within_class_scatter=False):
     # augmented_prompt_tensors is tensor that is NUM_SAMPLES x NUM_AUGMENTATIONS x D
     NUM_SAMPLES, NUM_AUGMENTATIONS, D = augmented_prompt_tensors.shape
 
@@ -322,6 +322,9 @@ def compute_LDA_matrix(augmented_prompt_tensors):
     within_class_scatter /= (NUM_SAMPLES * NUM_AUGMENTATIONS)
     within_class_scatter += delta * torch.eye(D).to(augmented_prompt_tensors.device)
 
+    if return_within_class_scatter:
+        return within_class_scatter 
+    
     # Equation 3 in LIDAR paper
     eigs, eigvecs = torch.linalg.eigh(within_class_scatter)
     within_sqrt = torch.diag(eigs**(-0.5))
