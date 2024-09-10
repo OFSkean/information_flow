@@ -1,3 +1,4 @@
+import os
 import math
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
@@ -9,13 +10,16 @@ import umap
 import tqdm
 import warnings
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 datasets = ['wikitext', 'ai-medical-dataset']
-model_types = ["cerebras", "EleutherAI", "mamba", "mamba2", "Medical-Llama3", "Llama3"]
+model_types = ["cerebras", "EleutherAI", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert"]
 
 cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B', '6.7B', '13B'] # '13b' also exists but doesnt fit in 24G for bfloat16
 EleutherAI_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b', '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
 mamba_sizes = ['130m', '370m', '790m', '1.4b', '2.8b']
 mamba2_sizes = ['130m', '370m', '780m', '1.3b', '2.7b']
+bert_sizes = ['base', 'large']
 medical_llama3_sizes = ['8B'] # its only 8B model
 llama3_sizes = ['8B'] 
 
@@ -25,7 +29,8 @@ model_name_to_sizes = {
     'mamba': mamba_sizes,
     'mamba2': mamba2_sizes,
     'Medical-Llama3': medical_llama3_sizes,
-    'Llama3': llama3_sizes
+    'Llama3': llama3_sizes,
+    'bert': bert_sizes
 }
 
 
@@ -49,7 +54,10 @@ def get_model_path(name, size):
         return f"state-spaces/mamba-{size}-hf"
     elif name == "mamba2":
         assert size in mamba2_sizes
-        return f"state-spaces/mamba2-{size}-hf"        
+        return f"state-spaces/mamba2-{size}-hf" 
+    elif name == "bert":
+        assert size in bert_sizes
+        return f"bert-{size}-uncased"       
 
 def get_dataloader(
         tokenizer, 
@@ -61,7 +69,8 @@ def get_dataloader(
         num_samples=10000, 
         filter_text_columns=True, 
         augment=False,
-        return_dataset=False
+        return_dataset=False,
+        max_sample_length=2048
     ):
     
     def wikitext_tokenize_function(examples):
@@ -69,7 +78,8 @@ def get_dataloader(
             texts = examples["text"]
         else:
             texts = text_augmentation(examples["text"]) 
-        return tokenizer(texts, truncation=True, max_length=2048)
+
+        return tokenizer(texts, truncation=True, max_length=max_sample_length)
     
     def medical_tokenize_function(examples):
         medical_prompt = """You are an AI Medical Assistant Chatbot, trained to answer medical questions. Below is an instruction that describes a task, paired with an response context. Write a response that appropriately completes the request.
@@ -173,7 +183,8 @@ def get_augmentation_collated_dataloader(
         min_length=2,
         max_length=None, 
         num_samples=10000, 
-        filter_text_columns=True
+        filter_text_columns=True,
+        max_sample_length=2048
     ):
 
     base_datasets = [
@@ -187,7 +198,8 @@ def get_augmentation_collated_dataloader(
             num_samples=num_samples, 
             filter_text_columns=filter_text_columns, 
             augment=True,
-            return_dataset=True
+            return_dataset=True,
+            max_sample_length=max_sample_length
         ) for _ in range(num_augmentations_per_sample)
     ]
 
@@ -295,40 +307,3 @@ def text_augmentation(texts, num_augmentations_per_sample=1):
     augmented_text = [str(aug.augment(x, n=num_augmentations_per_sample)) for x in texts]
 
     return augmented_text
-
-
-# Implements LDA matrix as defined in LIDAR paper (https://arxiv.org/pdf/2312.04000)
-def compute_LDA_matrix(augmented_prompt_tensors, return_within_class_scatter=False):
-    # augmented_prompt_tensors is tensor that is NUM_SAMPLES x NUM_AUGMENTATIONS x D
-    NUM_SAMPLES, NUM_AUGMENTATIONS, D = augmented_prompt_tensors.shape
-
-    delta = 1e-4
-
-    dataset_mean = torch.mean(augmented_prompt_tensors, dim=(0, 1)).squeeze() # D
-    class_means = torch.mean(augmented_prompt_tensors, dim=1) # NUM_SAMPLES x D
-
-
-    # Equation 1 in LIDAR paper
-    between_class_scatter = torch.zeros((D, D)).to(augmented_prompt_tensors.device)
-    for i in range(NUM_SAMPLES):
-        between_class_scatter += torch.outer(class_means[i] - dataset_mean, class_means[i] - dataset_mean)
-    between_class_scatter /= NUM_SAMPLES
-
-    # Equation 2 in LIDAR paper
-    within_class_scatter = torch.zeros((D, D)).to(augmented_prompt_tensors.device)
-    for i in range(NUM_SAMPLES):
-        for j in range(NUM_AUGMENTATIONS):
-            within_class_scatter += torch.outer(augmented_prompt_tensors[i, j] - class_means[i], augmented_prompt_tensors[i, j] - class_means[i])
-    within_class_scatter /= (NUM_SAMPLES * NUM_AUGMENTATIONS)
-    within_class_scatter += delta * torch.eye(D).to(augmented_prompt_tensors.device)
-
-    if return_within_class_scatter:
-        return within_class_scatter 
-    
-    # Equation 3 in LIDAR paper
-    eigs, eigvecs = torch.linalg.eigh(within_class_scatter)
-    within_sqrt = torch.diag(eigs**(-0.5))
-    fractional_inverse = eigvecs @ within_sqrt @ eigvecs.T
-    LDA_matrix = fractional_inverse @ between_class_scatter @ fractional_inverse
-
-    return LDA_matrix
