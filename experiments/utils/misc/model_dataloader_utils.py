@@ -13,10 +13,10 @@ import warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 datasets = ['wikitext', 'ai-medical-dataset']
-model_types = ["cerebras", "EleutherAI", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert"]
+model_types = ["cerebras", "Pythia", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert"]
 
 cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B', '6.7B', '13B'] # '13b' also exists but doesnt fit in 24G for bfloat16
-EleutherAI_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b', '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
+Pythia_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b']#, '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
 mamba_sizes = ['130m', '370m', '790m', '1.4b', '2.8b']
 mamba2_sizes = ['130m', '370m', '780m', '1.3b', '2.7b']
 bert_sizes = ['base', 'large']
@@ -24,7 +24,7 @@ medical_llama3_sizes = ['8B'] # its only 8B model
 llama3_sizes = ['8B'] 
 
 model_name_to_sizes = {
-    'EleutherAI': EleutherAI_sizes,
+    'Pythia': Pythia_sizes,
     'cerebras': cerebras_sizes,
     'mamba': mamba_sizes,
     'mamba2': mamba2_sizes,
@@ -36,12 +36,11 @@ model_name_to_sizes = {
 
 def get_model_path(name, size):
     assert name in model_types
-
     if name == "cerebras":
         assert size in cerebras_sizes
         return f"cerebras/Cerebras-GPT-{size}"
-    elif name == "EleutherAI":
-        assert size in EleutherAI_sizes
+    elif name == "Pythia":
+        assert size in Pythia_sizes
         return f"EleutherAI/pythia-{size}"
     elif name == "Medical-Llama3":
         assert size in medical_llama3_sizes
