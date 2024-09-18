@@ -27,8 +27,9 @@ def main():
     print(f"Running evaluation for {model_family} {model_size} layer {evaluation_layer}")
     
     # handle model
+    device_map = "auto" if model_family != 'bert' else None
     model_specs = ModelSpecifications(model_family, model_size, revision=revision)
-    model = AutoModelWrapper(model_specs, evaluation_layer_idx=evaluation_layer)
+    model = AutoModelWrapper(model_specs, device_map=device_map, evaluation_layer_idx=evaluation_layer)
 
     # handle output folder
     results_output_folder = f'results/{model_family}/{model_size}/{revision}/mteb/layer_{model.evaluation_layer_idx}'
