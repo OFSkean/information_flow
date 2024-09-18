@@ -12,8 +12,8 @@
 #SBATCH --partition=V4V32_SKY32M192_L       #partition/queue CAC48M192_L
 #SBATCH --account=gcl_lsa273_uksr   #project allocation accout 
 
-#SBATCH  --output=./lcc_logs/%x_%j.out     #Output file name
-#SBATCH  --error=./lcc_logs/%x_%j.err      #Error file name
+#SBATCH  --output=./lcc_logs/out.out     #Output file name
+#SBATCH  --error=./lcc_logs/out.err      #Error file name
 
 #SBATCH --mail-type NONE                 #Send email on start/end
 #SBATCH --mail-user ofsk222@uky.edu     #Where to send email
@@ -42,10 +42,11 @@ if [[ -z "$model_family" || -z "$model_size" || -z "$revision" || -z "$layer" ]]
 fi
 
 # Create the directory for logs
-log_dir="./lcc_logs/${model_family}/${model_size}/${revision}"
+log_dir="./lcc_logs/${model_family}/${model_size}/${revision}/layer-${layer}"
 mkdir -p "$log_dir"
 output_file="${log_dir}/%x_%j.out"
 error_file="${log_dir}/%x_%j.err"
 
-SCRIPT="./mteb-harness.py --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer"
-srun --output="$output_file" --error="$error_file" singularity run --nv $CONTAINER $SCRIPT
+SCRIPT="/home/ofsk222/projects/information_flow/experiments/mteb-harness.py"
+FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer"
+srun --output="$output_file" --error="$error_file" singularity run --nv $CONTAINER $FULL_SCRIPT
