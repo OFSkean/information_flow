@@ -12,10 +12,10 @@
 #SBATCH --partition=V4V32_SKY32M192_L       #partition/queue CAC48M192_L
 #SBATCH --account=gcl_lsa273_uksr   #project allocation accout 
 
-#SBATCH  --output=./lcc_logs/%x.out     #Output file name
-#SBATCH  --error=./lcc_logs/%x.err      #Error file name
+#SBATCH  --output=./lcc_logs/%x_%j.out     #Output file name
+#SBATCH  --error=./lcc_logs/%x_%j.err      #Error file name
 
-#SBATCH --mail-type ALL                 #Send email on start/end
+#SBATCH --mail-type NONE                 #Send email on start/end
 #SBATCH --mail-user ofsk222@uky.edu     #Where to send email
 
 
@@ -41,6 +41,11 @@ if [[ -z "$model_family" || -z "$model_size" || -z "$revision" || -z "$layer" ]]
     exit 1
 fi
 
-SCRIPT="./mteb-harness.py --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer"
+# Create the directory for logs
+log_dir="./lcc_logs/${model_family}/${model_size}/${revision}"
+mkdir -p "$log_dir"
+output_file="${log_dir}/%x_%j.out"
+error_file="${log_dir}/%x_%j.err"
 
-srun singularity run --nv $CONTAINER $SCRIPT
+SCRIPT="./mteb-harness.py --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer"
+srun --output="$output_file" --error="$error_file" singularity run --nv $CONTAINER $SCRIPT
