@@ -1,0 +1,58 @@
+{
+  "dataset_revision": "70970daeab8776df92f5ea462b6173c0b46fd2d1",
+  "evaluation_time": 8.048386573791504,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.19",
+  "scores": {
+    "test": [
+      {
+        "cosine_accuracy": 0.7966859390832688,
+        "cosine_accuracy_threshold": 0.9252484440803528,
+        "cosine_ap": 0.4774064388039727,
+        "cosine_f1": 0.4688148552703441,
+        "cosine_f1_threshold": 0.8870595693588257,
+        "cosine_precision": 0.4,
+        "cosine_recall": 0.5662269129287599,
+        "dot_accuracy": 0.7745127257554986,
+        "dot_accuracy_threshold": 6430.6650390625,
+        "dot_ap": 0.24743528098791584,
+        "dot_f1": 0.3686797411066232,
+        "dot_f1_threshold": 3275.18701171875,
+        "dot_precision": 0.22602780595500924,
+        "dot_recall": 0.9994722955145119,
+        "euclidean_accuracy": 0.7947785658937832,
+        "euclidean_accuracy_threshold": 27.04582977294922,
+        "euclidean_ap": 0.4745207427032932,
+        "euclidean_f1": 0.46590355577204084,
+        "euclidean_f1_threshold": 33.98839569091797,
+        "euclidean_precision": 0.43260967887833557,
+        "euclidean_recall": 0.5047493403693931,
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.4774064388039727,
+        "manhattan_accuracy": 0.7949573821302974,
+        "manhattan_accuracy_threshold": 688.9049072265625,
+        "manhattan_ap": 0.47515454652985034,
+        "manhattan_f1": 0.4656133828996283,
+        "manhattan_f1_threshold": 865.1923828125,
+        "manhattan_precision": 0.41594022415940224,
+        "manhattan_recall": 0.5287598944591029,
+        "max_accuracy": 0.7966859390832688,
+        "max_ap": 0.4774064388039727,
+        "max_f1": 0.4688148552703441,
+        "max_precision": 0.43260967887833557,
+        "max_recall": 0.9994722955145119,
+        "similarity_accuracy": 0.7966859390832688,
+        "similarity_accuracy_threshold": 0.9252484440803528,
+        "similarity_ap": 0.4774064388039727,
+        "similarity_f1": 0.4688148552703441,
+        "similarity_f1_threshold": 0.8870595693588257,
+        "similarity_precision": 0.4,
+        "similarity_recall": 0.5662269129287599
+      }
+    ]
+  },
+  "task_name": "TwitterSemEval2015"
+}
