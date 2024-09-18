@@ -44,8 +44,8 @@ fi
 # Create the directory for logs
 log_dir="./lcc_logs/${model_family}/${model_size}/${revision}/layer-${layer}"
 mkdir -p "$log_dir"
-output_file="${log_dir}/%x_%j.out"
-error_file="${log_dir}/%x_%j.err"
+output_file="${log_dir}/logs.out"
+error_file="${log_dir}/logs.err"
 
 SCRIPT="/home/ofsk222/projects/information_flow/experiments/mteb-harness.py"
 FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer"
