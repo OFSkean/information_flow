@@ -15,7 +15,8 @@ def parse_args():
     parser.add_argument('--model_family', type=str, default='Pythia')
     parser.add_argument('--model_size', type=str, default='1b')
     parser.add_argument('--revision', type=str, default='main')
-    parser.add_argument('--evaluation_layer', type=int, default=17, help='Layer to use for evaluation. -1 for the final layer. This is 0-indexed.')
+    parser.add_argument('--evaluation_layer', type=int, default=-1, help='Layer to use for evaluation. -1 for the final layer. This is 0-indexed.')
+    parser.add_argument('--base_results_path', type=str, default='results')
     return parser.parse_args()
 
 def main():
@@ -24,7 +25,8 @@ def main():
     model_size = args.model_size
     revision = args.revision
     evaluation_layer = args.evaluation_layer
-    print(f"Running evaluation for {model_family} {model_size} layer {evaluation_layer}")
+
+    print(f"Running evaluation for {model_family} {model_size} {revision} layer {evaluation_layer}")
     
     # handle model
     device_map = "auto" if model_family != 'bert' else None
@@ -32,7 +34,7 @@ def main():
     model = AutoModelWrapper(model_specs, device_map=device_map, evaluation_layer_idx=evaluation_layer)
 
     # handle output folder
-    results_output_folder = f'results/{model_family}/{model_size}/{revision}/mteb/layer_{model.evaluation_layer_idx}'
+    results_output_folder = f'{args.base_results_path}/{model_family}/{model_size}/{revision}/mteb/layer_{model.evaluation_layer_idx}'
     def custom_create_output_folder(*args):
         output_folder = Path(results_output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
