@@ -9,6 +9,45 @@ import numpy as np
 # By default enabled, can be disabled by setting to True in the notebook
 DISABLE_TQDM = False
 
+class EvaluationMetricSpecifications:
+    def __init__(
+        self, 
+        evaluation_metric, 
+        num_samples = 1000, 
+        alpha = 1, 
+        normalizations = ['maxEntropy', 'raw', 'logN', 'logNlogD', 'logD'],
+        curvature_k = 1
+    ):
+        self.evaluation_metric = evaluation_metric
+        self.num_samples = num_samples
+
+        
+        if self.evaluation_metric == 'sentence-entropy':
+            self.granularity = 'sentence'
+            self.evaluation_metric = 'entropy'
+        elif self.evaluation_metric == 'dataset-entropy':
+            self.granularity = 'dataset'
+            self.evaluation_metric = 'entropy'
+        else:
+            self.granularity = None
+
+        # for matrix-based metrics (LIDAR, DIME, entropy)
+        self.normalizations = normalizations
+        self.alpha = alpha
+
+        # for curvature
+        self.curvature_k = curvature_k
+        
+        self.do_checks()
+
+    def do_checks(self):
+        assert self.evaluation_metric in metric_name_to_function.keys()
+        assert self.granularity in ['sentence', 'dataset', None]
+
+        assert self.alpha > 0
+        assert self.num_samples > 0
+        assert self.curvature_k > 0 and isinstance(self.curvature_k, int)
+
 def entropy_normalization(entropy, normalization, N, D):
     """
     Normalize the entropy based on the specified normalization method.
