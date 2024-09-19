@@ -9,6 +9,7 @@ import numpy as np
 import umap
 import tqdm
 import warnings
+import mteb
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -69,10 +70,11 @@ def get_dataloader(
         filter_text_columns=True, 
         augment=False,
         return_dataset=False,
-        max_sample_length=2048
+        max_sample_length=2048,
+        num_workers=8
     ):
     
-    def wikitext_tokenize_function(examples):
+    def general_tokenize_function(examples):
         if not augment:
             texts = examples["text"]
         else:
@@ -114,8 +116,7 @@ def get_dataloader(
     def is_not_wikipedia_heading(example):
         return not (example["text"].strip().startswith("=") and example["text"].strip().endswith("="))
 
-    assert dataset_name in datasets
-    assert split in ['train', 'validation']
+    assert dataset_name in datasets or 'mteb' in dataset_name
     assert context_length_ratio <= 1
 
     if dataset_name == 'wikitext':
@@ -133,7 +134,7 @@ def get_dataloader(
 
         # tokenize the dataset
         try:
-            tokenized_dataset = dataset.map(wikitext_tokenize_function, batched=True).shuffle(seed=42)
+            tokenized_dataset = dataset.map(general_tokenize_function, batched=True).shuffle(seed=42)
             tokenized_dataset.set_format("torch")
         except Exception as e:
             for idx, d in enumerate(dataset):
@@ -163,6 +164,22 @@ def get_dataloader(
         if max_length is not None:
             tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) <= max_length)
 
+    elif 'mteb' in dataset_name:
+        dataset = load_dataset(dataset_name)[split]
+
+        # filter out unneeded samples
+        num_samples = min(num_samples, len(dataset))
+        dataset = dataset.select(range(num_samples))
+
+        tokenized_dataset = dataset.map(general_tokenize_function, batched=True).shuffle(seed=42)
+        tokenized_dataset.set_format("torch")
+
+        if filter_text_columns:
+            for column in tokenized_dataset.column_names:
+                if column not in ['input_ids', 'attention_mask']:
+                    tokenized_dataset = tokenized_dataset.remove_columns([column])
+
+
     # if context_length_ratio < 1, reduce all sentences to that ratio of length
     tokenized_dataset = tokenized_dataset.map(adjust_context_length, batched=False)
 
@@ -183,7 +200,8 @@ def get_augmentation_collated_dataloader(
         max_length=None, 
         num_samples=10000, 
         filter_text_columns=True,
-        max_sample_length=2048
+        max_sample_length=2048,
+        num_workers=8
     ):
 
     base_datasets = [
@@ -198,7 +216,8 @@ def get_augmentation_collated_dataloader(
             filter_text_columns=filter_text_columns, 
             augment=True,
             return_dataset=True,
-            max_sample_length=max_sample_length
+            max_sample_length=max_sample_length,
+            num_workers=num_workers
         ) for _ in range(num_augmentations_per_sample)
     ]
 
