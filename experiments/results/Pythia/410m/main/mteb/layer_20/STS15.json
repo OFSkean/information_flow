@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "ae752c7c21bf194d8b67fd573edf7ae58183cbe3",
+  "evaluation_time": 17.57386040687561,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.19",
+  "scores": {
+    "test": [
+      {
+        "cosine_pearson": 0.5513973931208122,
+        "cosine_spearman": 0.5791985191964102,
+        "euclidean_pearson": 0.5758714649266873,
+        "euclidean_spearman": 0.5861003148066649,
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.5791985191964102,
+        "manhattan_pearson": 0.5755557981709257,
+        "manhattan_spearman": 0.5862040327673768,
+        "pearson": 0.5513973931208122,
+        "spearman": 0.5791985191964102
+      }
+    ]
+  },
+  "task_name": "STS15"
+}

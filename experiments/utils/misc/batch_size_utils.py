@@ -14,7 +14,7 @@ def is_oom_error(exception: BaseException) -> bool:
     )
 
 @torch.no_grad()
-def find_optimal_batch_size(model, number_of_samples, batch_size=512, max_sentence_length=2048, max_trials=10, verbose=False):
+def find_optimal_batch_size(model, number_of_samples, device, batch_size=512, max_sentence_length=2048, max_trials=10, verbose=False):
     """ Batch scaling mode where the size is doubled at each iteration until an
         OOM error is encountered. 
 
@@ -27,8 +27,8 @@ def find_optimal_batch_size(model, number_of_samples, batch_size=512, max_senten
         garbage_collect_cuda()
         try:
             worst_case_batch = {
-                "input_ids": torch.randint(0, 1, (batch_size, max_sentence_length)).to(model.device),
-                "attention_mask": torch.ones((batch_size, max_sentence_length)).to(model.device)
+                "input_ids": torch.randint(0, 1, (batch_size, max_sentence_length)).to(device),
+                "attention_mask": torch.ones((batch_size, max_sentence_length)).to(device)
             }
             model(**worst_case_batch)
             had_success = True

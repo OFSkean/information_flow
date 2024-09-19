@@ -85,6 +85,7 @@ class AutoModelWrapper:
         # find optimal batch size
         optimal_batch_size = find_optimal_batch_size(self.model, 
                                                      number_of_samples=len(sentences),
+                                                     device=self._get_first_layer_device(),
                                                      max_sentence_length = tokenized_sentences.input_ids.shape[1], 
                                                      verbose=verbose)
         self.batch_size_hint = optimal_batch_size
@@ -103,12 +104,16 @@ class AutoModelWrapper:
 
         return np.array(embeddings)
 
+    def _get_first_layer_device(self):
+        first_layer_name = list(self.model.hf_device_map.keys())[0]
+        return self.model.hf_device_map[first_layer_name]
+    
     @torch.no_grad()
     def _encode(self, dataloader, verbose=False) -> np.ndarray:
         encoded_batches = []
 
         for batch in tqdm.tqdm(dataloader, total=len(dataloader), disable= not verbose):
-            batch = {k: v.to(self.model.device) for k, v in batch.items()}
+            batch = {k: v.to(self._get_first_layer_device()) for k, v in batch.items()}
                 
             outputs = self.model(**batch)
             hidden_states = outputs.hidden_states[self.evaluation_layer_idx]
