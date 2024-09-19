@@ -34,9 +34,12 @@ class ModelSpecifications:
 class AutoModelWrapper:
     def __init__(self, model_specs: ModelSpecifications, device_map="auto", evaluation_layer_idx: int = -1):
         model_path = get_model_path(model_specs.model_family, model_specs.model_size)
+        
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.tokenizer.pad_token = self.tokenizer.eos_token
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = "left"
+        assert self.tokenizer.pad_token is not None
 
         self.config = AutoConfig.from_pretrained(model_path, 
                                                  revision=model_specs.revision,
