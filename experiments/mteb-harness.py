@@ -36,7 +36,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_results_path(model_specs: ModelSpecifications, evaluation_metric_specs: EvaluationMetricSpecifications, dataloader_kwargs, include_file_name=True):
+def get_results_path(model_specs: ModelSpecifications, evaluation_metric_specs: EvaluationMetricSpecifications, dataloader_kwargs, base_results_path, include_file_name=True):
     model_family = model_specs.model_family
     model_size = model_specs.model_size
     revision = model_specs.revision
@@ -49,15 +49,18 @@ def get_results_path(model_specs: ModelSpecifications, evaluation_metric_specs: 
         evaluation_metric = f"{evaluation_metric}_{granularity}"
 
     if include_file_name:
-        return f"results/{model_family}/{model_size}/{revision}/metrics/{dataset}/{split}/{evaluation_metric}.pkl"
+        return f"{base_results_path}/{model_family}/{model_size}/{revision}/metrics/{dataset}/{split}/{evaluation_metric}.pkl"
     else:
-        return f"results/{model_family}/{model_size}/{revision}/metrics/{dataset}/{split}"
+        return f"{base_results_path}/{model_family}/{model_size}/{revision}/metrics/{dataset}/{split}"
 
-def save_results(results, model_specs: ModelSpecifications, evaluation_metric_specs: EvaluationMetricSpecifications, dataloader_kwargs):
-    results_path = get_results_path(model_specs, evaluation_metric_specs, dataloader_kwargs, include_file_name=True)
+def save_results(results, model_specs: ModelSpecifications, evaluation_metric_specs: EvaluationMetricSpecifications, dataloader_kwargs, base_results_path):
+    results_path = get_results_path(model_specs, evaluation_metric_specs, dataloader_kwargs, base_results_path, include_file_name=False)
+    evaluation_metric = evaluation_metric_specs.evaluation_metric
+    if evaluation_metric == 'entropy':
+        evaluation_metric = f"{evaluation_metric}_{evaluation_metric_specs.granularity}"
 
     os.makedirs(results_path, exist_ok=True)
-    with open(results_path, "wb") as f:
+    with open(f"{results_path}/{evaluation_metric}.pkl", "wb") as f:
         pickle.dump(results, f)
 
 def calculate_and_save_layerwise_metrics(
@@ -65,7 +68,8 @@ def calculate_and_save_layerwise_metrics(
     tokenizer,
     model_specs: ModelSpecifications,
     evaluation_metric_specs: EvaluationMetricSpecifications,
-    dataloader_kwargs: Dict[str, Any]
+    dataloader_kwargs: Dict[str, Any],
+    base_results_path: str
 ):
     if evaluation_metric_specs.evaluation_metric == 'entropy':
         dataloader = get_dataloader(tokenizer, **dataloader_kwargs)
@@ -111,10 +115,10 @@ def calculate_and_save_layerwise_metrics(
 
     compute_func = metric_name_to_function[evaluation_metric_specs.evaluation_metric]
     results = forward_pass_func(model, dataloader, compute_func, **compute_func_kwargs)
-    save_results(results, model_specs, evaluation_metric_specs, dataloader_kwargs)
+    save_results(results, model_specs, evaluation_metric_specs, dataloader_kwargs, base_results_path)
 
 
-def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.MTEB):
+def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.MTEB, args):
     device = torch.device('cuda')
     model_path = get_model_path(model_specs.model_family, model_specs.model_size)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -127,6 +131,7 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
     metrics = ['infonce', 'dime', 'lidar', 'sentence-entropy', 'dataset-entropy', 'curvature']
     splits = ['train', 'test']
     for task_dataset, metric, split in product(task_datasets, metrics, splits):
+        print(f"Running evaluation for {task_dataset} - {metric} - {split}")
         evaluation_metric_specs = EvaluationMetricSpecifications(evaluation_metric=metric)
 
         dataloader_kwargs = {
@@ -135,12 +140,12 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
         }
 
         # Check if results already exist
-        results_path = get_results_path(model_specs, evaluation_metric_specs, dataloader_kwargs, include_file_name=False)
+        results_path = get_results_path(model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path, include_file_name=True)
         if os.path.exists(results_path):
             print(f"Results already exist for {task_dataset} - {metric} - {split}. Skipping...")
             continue
 
-        calculate_and_save_layerwise_metrics(model, tokenizer, model_specs, evaluation_metric_specs, dataloader_kwargs)
+        calculate_and_save_layerwise_metrics(model, tokenizer, model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path)
 
 def main():
     args = parse_args()
@@ -173,7 +178,7 @@ def main():
         evaluator.run(model, kwargs=encoding_kwargs, output_folder='./mteb-results', raise_error=False, overwrite_results=False, verbosity=2)
 
     elif args.purpose == 'run_entropy_metrics':
-        run_entropy_metrics(model_specs, evaluator)
+        run_entropy_metrics(model_specs, evaluator, args)
 
 
 if __name__ == "__main__":
