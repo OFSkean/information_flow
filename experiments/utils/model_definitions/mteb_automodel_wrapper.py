@@ -48,10 +48,11 @@ class AutoModelWrapper:
         self.update_evaluation_layer(evaluation_layer_idx)
         self.config.num_hidden_layers = self.evaluation_layer_idx
 
+        data_type = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
         self.model = AutoModel.from_pretrained(model_path, 
                                                 revision=model_specs.revision,
                                                 config=self.config,
-                                                torch_dtype=torch.bfloat16,
+                                                torch_dtype=data_type,
                                                 device_map=device_map).eval()
 
         num_gpus = torch.cuda.device_count()
