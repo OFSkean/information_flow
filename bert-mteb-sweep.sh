@@ -2,8 +2,8 @@
 USE_SLURM=1
 
 MODEL_NAME="bert"
-MODEL_SIZES=('base')
-MAX_LAYER=0
+MODEL_SIZES=('base' 'large')
+MAX_LAYER=30
 REVISION="main"
 
 for size in ${MODEL_SIZES[@]}; do

@@ -54,6 +54,9 @@ class AutoModelWrapper:
                                                 torch_dtype=torch.bfloat16,
                                                 device_map=device_map).eval()
 
+        num_gpus = torch.cuda.device_count()
+        print(f"Number of GPUs: {num_gpus}")
+
     def update_evaluation_layer(self, evaluation_layer_idx):
         if evaluation_layer_idx == -1:
             self.evaluation_layer_idx = self.num_layers - 1

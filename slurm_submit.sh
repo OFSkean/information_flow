@@ -2,14 +2,14 @@
 
 #SBATCH --exclude=gvnodeb007
 
-#SBATCH --gres=gpu:2
-#SBATCH --cpus-per-task=8
-#SBATCH --ntasks=2
-#SBATCH --ntasks-per-node=2
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=10
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=4G   # memory per cpu-core
 
 #SBATCH -t 3-00:00:00           #Time Limit d-hh:mm:ss
-#SBATCH --partition=V4V32_SKY32M192_L       #partition/queue CAC48M192_L
+#SBATCH --partition=V4V32_CAS40M192_L       #partition/queue CAC48M192_L
 #SBATCH --account=gcl_lsa273_uksr   #project allocation accout 
 
 #SBATCH  --output=./lcc_logs/out.out     #Output file name
