@@ -1,6 +1,6 @@
 import os
 import math
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, Dataset
 from torch.utils.data import DataLoader
 import torch
 from sklearn.manifold import TSNE
@@ -74,11 +74,24 @@ def get_dataloader(
         num_workers=8
     ):
     
-    def general_tokenize_function(examples):
-        if not augment:
-            texts = examples["text"]
+    def find_data_key_in_examples(examples):
+        if "text" in examples:
+            return "text"
+        elif "sentences" in examples:
+            return "sentences"
         else:
-            texts = text_augmentation(examples["text"]) 
+            raise ValueError("No text or sentences column found in examples")
+
+    def general_tokenize_function(examples):
+        data_key = find_data_key_in_examples(examples)
+        sentences = examples[data_key]
+        if isinstance(sentences[0], list):
+            sentences = [item for sublist in sentences for item in sublist]
+
+        if not augment:
+            texts = sentences
+        else:
+            texts = text_augmentation(sentences) 
 
         return tokenizer(texts, truncation=True, max_length=max_sample_length)
     
@@ -165,9 +178,18 @@ def get_dataloader(
             tokenized_dataset = tokenized_dataset.filter(lambda x: len(x['input_ids']) <= max_length)
 
     elif 'mteb' in dataset_name:
-        dataset = load_dataset(dataset_name)[split]
+        try:
+            dataset = load_dataset(dataset_name)[split]
+        except KeyError as e:
+            print(f"Failed to load dataset {dataset_name} with split {split} with error {e}")
+            raise e
 
-        # filter out unneeded samples
+        data_key = find_data_key_in_examples(dataset[0])
+        if isinstance(dataset[0][data_key], list):
+            # data is splits, choose the first split
+            sentences = [item for sublist in dataset[0][data_key] for item in sublist]
+            dataset = Dataset.from_dict({"text": sentences})
+
         num_samples = min(num_samples, len(dataset))
         dataset = dataset.select(range(num_samples))
 
