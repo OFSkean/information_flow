@@ -31,8 +31,8 @@ def parse_args():
     parser.add_argument('--model_size', type=str, default='14m')
     parser.add_argument('--revision', type=str, default='main')
     parser.add_argument('--evaluation_layer', type=int, default=-1, help='Layer to use for evaluation. -1 for the final layer. This is 0-indexed.')
-    parser.add_argument('--base_results_path', type=str, default='results')
-    parser.add_argument('--purpose', type=str, default='run_tasks', choices=['run_tasks', 'run_entropy_metrics'])
+    parser.add_argument('--base_results_path', type=str, default='experiments/results')
+    parser.add_argument('--purpose', type=str, default='run_entropy_metrics', choices=['run_tasks', 'run_entropy_metrics', 'download_datasets'])
     return parser.parse_args()
 
 
@@ -144,8 +144,11 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
         if os.path.exists(results_path):
             print(f"Results already exist for {task_dataset} - {metric} - {split}. Skipping...")
             continue
-
-        calculate_and_save_layerwise_metrics(model, tokenizer, model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path)
+        
+        try:
+            calculate_and_save_layerwise_metrics(model, tokenizer, model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path)
+        except Exception as e:
+            print(f"Error running evaluation for {task_dataset} - {metric} - {split}: {str(e)}")
 
 def main():
     args = parse_args()
@@ -179,6 +182,10 @@ def main():
 
     elif args.purpose == 'run_entropy_metrics':
         run_entropy_metrics(model_specs, evaluator, args)
+
+    elif args.purpose == 'download_datasets':
+        for task in evaluator.tasks:
+            task.load_data()
 
 
 if __name__ == "__main__":
