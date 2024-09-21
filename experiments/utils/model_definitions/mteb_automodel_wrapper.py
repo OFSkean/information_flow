@@ -108,7 +108,7 @@ class AutoModelWrapper:
         dataloader = DataLoader(dataset, 
                                 batch_size=optimal_batch_size, 
                                 shuffle=False, 
-                                num_workers=16, 
+                                num_workers=8, 
                                 collate_fn=self.collate)
 
         embeddings = self._encode(dataloader, verbose=verbose)

@@ -2,8 +2,10 @@
 USE_SLURM=1
 
 MODEL_NAME="mamba"
-MODEL_SIZES=('130m' '370m' '790m' '1.4b' '2.8b')
-MAX_LAYER=70
+#MODEL_SIZES=('370m' '790m' '1.4b' '2.8b')
+MODEL_SIZES=('790m')
+#MODEL_SIZES=('370m')
+MAX_LAYER=50
 REVISION="main"
 
 for size in ${MODEL_SIZES[@]}; do
