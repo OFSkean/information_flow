@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "59042f120c80e8afa9cdbb224f67076cec0fc9a7",
+  "evaluation_time": 120.85112023353577,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.26297062858337256,
+        "map": 0.26297062858337256,
+        "mrr": 0.26717368218256315,
+        "nAUC_map_diff1": 0.176626949069701,
+        "nAUC_map_max": -0.2562772610999636,
+        "nAUC_map_std": -0.09645005562704088,
+        "nAUC_mrr_diff1": 0.1633640143013924,
+        "nAUC_mrr_max": -0.19277413486042533,
+        "nAUC_mrr_std": -0.08475458564063584
+      }
+    ]
+  },
+  "task_name": "MindSmallReranking"
+}

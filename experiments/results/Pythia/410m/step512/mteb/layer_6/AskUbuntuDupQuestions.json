@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "2000358ca161889fa9c082cb41daa8dcfb161a54",
+  "evaluation_time": 6.61277961730957,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.43717364860909774,
+        "map": 0.43717364860909774,
+        "mrr": 0.5484247900452887,
+        "nAUC_map_diff1": 0.08265453843386197,
+        "nAUC_map_max": 0.08689967730428852,
+        "nAUC_map_std": 0.0007148889347085074,
+        "nAUC_mrr_diff1": 0.11981608503409151,
+        "nAUC_mrr_max": 0.12206174075414836,
+        "nAUC_mrr_std": -0.010207463430006303
+      }
+    ]
+  },
+  "task_name": "AskUbuntuDupQuestions"
+}

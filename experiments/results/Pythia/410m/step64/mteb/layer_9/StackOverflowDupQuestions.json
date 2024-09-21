@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "e185fbe320c72810689fc5848eb6114e1ef5ec69",
+  "evaluation_time": 42.88598299026489,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.2572089040996709,
+        "map": 0.2572089040996709,
+        "mrr": 0.24389204545454546,
+        "nAUC_map_diff1": 0.17923230353139136,
+        "nAUC_map_max": 0.22682666568608784,
+        "nAUC_map_std": 0.06398524143005141,
+        "nAUC_mrr_diff1": 0.17071036917392698,
+        "nAUC_mrr_max": 0.2262125727157492,
+        "nAUC_mrr_std": 0.0649608919144559
+      }
+    ]
+  },
+  "task_name": "StackOverflowDupQuestions"
+}

@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "d3c5e1fc0b855ab6097bf1cda04dd73947d7caab",
+  "evaluation_time": 98.01357936859131,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.42157546821399394,
+        "map": 0.42157546821399394,
+        "mrr": 0.6310856536346733,
+        "nAUC_map_diff1": 0.20008001365993025,
+        "nAUC_map_max": 0.28373716524181836,
+        "nAUC_map_std": 0.3031337113363905,
+        "nAUC_mrr_diff1": 0.28351380458395853,
+        "nAUC_mrr_max": 0.3298335774602545,
+        "nAUC_mrr_std": 0.2415318564750785
+      }
+    ]
+  },
+  "task_name": "SciDocsRR"
+}

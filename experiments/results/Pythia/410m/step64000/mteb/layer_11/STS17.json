@@ -1,0 +1,138 @@
+{
+  "dataset_revision": "faeb762787bd10488a50c8b5be4a3b82e411949c",
+  "evaluation_time": 19.457956552505493,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "cosine_pearson": 0.15993952545117646,
+        "cosine_spearman": 0.16021802007381247,
+        "euclidean_pearson": 0.05503833871385156,
+        "euclidean_spearman": 0.03786229148767858,
+        "hf_subset": "en-de",
+        "languages": [
+          "eng-Latn",
+          "deu-Latn"
+        ],
+        "main_score": 0.16021802007381247,
+        "manhattan_pearson": 0.0701781761950246,
+        "manhattan_spearman": 0.05166020568847679,
+        "pearson": 0.15993952545117646,
+        "spearman": 0.16021802007381247
+      },
+      {
+        "cosine_pearson": 0.015741053701320586,
+        "cosine_spearman": 0.019556294936496126,
+        "euclidean_pearson": -0.12025811457863,
+        "euclidean_spearman": -0.1138320514898201,
+        "hf_subset": "en-ar",
+        "languages": [
+          "eng-Latn",
+          "ara-Arab"
+        ],
+        "main_score": 0.019556294936496126,
+        "manhattan_pearson": -0.131279223463516,
+        "manhattan_spearman": -0.12964929815413348,
+        "pearson": 0.015741053701320586,
+        "spearman": 0.019556294936496126
+      },
+      {
+        "cosine_pearson": 0.021542848014992063,
+        "cosine_spearman": 0.01617199937005236,
+        "euclidean_pearson": -0.08244090167400851,
+        "euclidean_spearman": -0.09205807854130035,
+        "hf_subset": "en-tr",
+        "languages": [
+          "eng-Latn",
+          "tur-Latn"
+        ],
+        "main_score": 0.01617199937005236,
+        "manhattan_pearson": -0.07160074092913948,
+        "manhattan_spearman": -0.0772882473710221,
+        "pearson": 0.021542848014992063,
+        "spearman": 0.01617199937005236
+      },
+      {
+        "cosine_pearson": 0.24459909196138438,
+        "cosine_spearman": 0.23388685029402634,
+        "euclidean_pearson": 0.15274886356701384,
+        "euclidean_spearman": 0.13601180045958583,
+        "hf_subset": "fr-en",
+        "languages": [
+          "fra-Latn",
+          "eng-Latn"
+        ],
+        "main_score": 0.23388685029402634,
+        "manhattan_pearson": 0.14628496135465247,
+        "manhattan_spearman": 0.1410658463131057,
+        "pearson": 0.24459909196138438,
+        "spearman": 0.23388685029402634
+      },
+      {
+        "cosine_pearson": 0.1998213075949646,
+        "cosine_spearman": 0.2406437728688036,
+        "euclidean_pearson": 0.09800121771239712,
+        "euclidean_spearman": 0.12487006642670838,
+        "hf_subset": "it-en",
+        "languages": [
+          "ita-Latn",
+          "eng-Latn"
+        ],
+        "main_score": 0.2406437728688036,
+        "manhattan_pearson": 0.09302075132424022,
+        "manhattan_spearman": 0.12402400961779471,
+        "pearson": 0.1998213075949646,
+        "spearman": 0.2406437728688036
+      },
+      {
+        "cosine_pearson": 0.24562674843764482,
+        "cosine_spearman": 0.23691743270269308,
+        "euclidean_pearson": 0.13935621050487976,
+        "euclidean_spearman": 0.12502997539195512,
+        "hf_subset": "nl-en",
+        "languages": [
+          "nld-Latn",
+          "eng-Latn"
+        ],
+        "main_score": 0.23691743270269308,
+        "manhattan_pearson": 0.135496198196793,
+        "manhattan_spearman": 0.1252087197882045,
+        "pearson": 0.24562674843764482,
+        "spearman": 0.23691743270269308
+      },
+      {
+        "cosine_pearson": 0.6326736169726013,
+        "cosine_spearman": 0.6518343011387758,
+        "euclidean_pearson": 0.6185742495106648,
+        "euclidean_spearman": 0.6375597352146459,
+        "hf_subset": "en-en",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.6518343011387758,
+        "manhattan_pearson": 0.6174273737488059,
+        "manhattan_spearman": 0.6352364424599551,
+        "pearson": 0.6326736169726013,
+        "spearman": 0.6518343011387758
+      },
+      {
+        "cosine_pearson": 0.2681281848797882,
+        "cosine_spearman": 0.24381998265086877,
+        "euclidean_pearson": 0.21063095343896313,
+        "euclidean_spearman": 0.19129855155711906,
+        "hf_subset": "es-en",
+        "languages": [
+          "spa-Latn",
+          "eng-Latn"
+        ],
+        "main_score": 0.24381998265086877,
+        "manhattan_pearson": 0.20453077463949282,
+        "manhattan_spearman": 0.18533793943227303,
+        "pearson": 0.2681281848797882,
+        "spearman": 0.24381998265086877
+      }
+    ]
+  },
+  "task_name": "STS17"
+}
