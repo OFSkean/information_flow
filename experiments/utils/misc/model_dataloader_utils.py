@@ -62,12 +62,14 @@ def get_model_path(name, size):
     elif name == "bert":
         assert size in bert_sizes
         return f"bert-{size}-uncased"
-    elif name == "LLM2Vec":
+    elif name == 'LLM2Vec-mntp-unsup-simcse':
         assert size in LLM2Vec_sizes
-        return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-unsup-simcse"
+        return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
     elif name == "llama-instruct":
         assert size in llama_instruct_sizes
         return f"meta-llama/Meta-Llama-3-8B-Instruct"
+    else:
+        raise ValueError(f"Model type {name} not found")
 
 def get_dataloader(
         tokenizer, 

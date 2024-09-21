@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--evaluation_layer', type=int, default=-1, help='Layer to use for evaluation. -1 for the final layer. This is 0-indexed.')
     parser.add_argument('--base_results_path', type=str, default='experiments/results')
     parser.add_argument('--purpose', type=str, default='run_entropy_metrics', choices=['run_tasks', 'run_entropy_metrics', 'download_datasets'])
+    parser.add_argument('--raise_error', type=bool, default=False)
     return parser.parse_args()
 
 
@@ -179,7 +180,7 @@ def main():
         
         encoding_kwargs = {'verbose': True}
         evaluator.create_output_folder = custom_create_output_folder
-        evaluator.run(model, kwargs=encoding_kwargs, output_folder='./mteb-results', raise_error=False, overwrite_results=False, verbosity=2)
+        evaluator.run(model, kwargs=encoding_kwargs, output_folder='./mteb-results', raise_error=args.raise_error, overwrite_results=False, verbosity=2)
 
     elif args.purpose == 'run_entropy_metrics':
         run_entropy_metrics(model_specs, evaluator, args)

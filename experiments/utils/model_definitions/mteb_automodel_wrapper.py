@@ -12,6 +12,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 from ..misc.model_dataloader_utils import get_model_path, model_name_to_sizes
 from ..misc.batch_size_utils import find_optimal_batch_size
+from llm2vec import LLM2Vec
 
 
 class ModelSpecifications:
@@ -35,6 +36,7 @@ class ModelSpecifications:
 class AutoModelWrapper:
     def __init__(self, model_specs: ModelSpecifications, device_map="auto", evaluation_layer_idx: int = -1):
         model_path = get_model_path(model_specs.model_family, model_specs.model_size)
+        self.model_path = model_path
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if self.tokenizer.pad_token is None:
@@ -49,12 +51,20 @@ class AutoModelWrapper:
         self.update_evaluation_layer(evaluation_layer_idx)
         self.config.num_hidden_layers = self.evaluation_layer_idx
 
-        data_type = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-        self.model = AutoModel.from_pretrained(model_path, 
-                                                revision=model_specs.revision,
-                                                config=self.config,
-                                                torch_dtype=data_type,
-                                                device_map=device_map).eval()
+        FROM_PRETRAINED_KWARGS = {
+            'revision': model_specs.revision,
+            'config': self.config,
+            'torch_dtype': torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+            'device_map': device_map
+        }
+
+        if 'llm2vec' in model_path.lower():
+            MODEL_CLASS = LLM2Vec
+            FROM_PRETRAINED_KWARGS['peft_model_name_or_path'] = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-unsup-simcse"
+        else:
+            MODEL_CLASS = AutoModel
+
+        self.model = MODEL_CLASS.from_pretrained(model_path, **FROM_PRETRAINED_KWARGS).eval()
 
         num_gpus = torch.cuda.device_count()
         print(f"Number of GPUs: {num_gpus}")
@@ -84,7 +94,7 @@ class AutoModelWrapper:
                                             max_length=max_sample_length)
         
         # find optimal batch size
-        optimal_batch_size = find_optimal_batch_size(self.model, 
+        optimal_batch_size = find_optimal_batch_size(model=self._get_model_with_forward_pass(), 
                                                      number_of_samples=len(sentences),
                                                      device=self._get_first_layer_device(),
                                                      max_sentence_length = tokenized_sentences.input_ids.shape[1], 
@@ -105,18 +115,34 @@ class AutoModelWrapper:
 
         return np.array(embeddings)
 
+    def _get_hf_device_map(self):
+        if hasattr(self.model, 'hf_device_map'):
+            return self.model.hf_device_map
+        elif hasattr(self.model, 'model') and hasattr(self.model.model, 'hf_device_map'):
+            return self.model.model.hf_device_map
+        else:
+            raise ValueError("Could not find hf_device_map")
+    
     def _get_first_layer_device(self):
-        first_layer_name = list(self.model.hf_device_map.keys())[0]
-        return self.model.hf_device_map[first_layer_name]
+        device_map = self._get_hf_device_map()
+        first_layer_name = list(device_map.keys())[0]
+        return device_map[first_layer_name]
+    
+    def _get_model_with_forward_pass(self):
+        if 'llm2vec' in self.model_path.lower():
+            return self.model.model
+        else:
+            return self.model
     
     @torch.no_grad()
     def _encode(self, dataloader, verbose=False) -> np.ndarray:
         encoded_batches = []
+        model_with_forward_pass = self._get_model_with_forward_pass()
 
         for batch in tqdm.tqdm(dataloader, total=len(dataloader), disable= not verbose):
             batch = {k: v.to(self._get_first_layer_device()) for k, v in batch.items()}
                 
-            outputs = self.model(**batch)
+            outputs = model_with_forward_pass(**batch)
             hidden_states = outputs.hidden_states[self.evaluation_layer_idx]
             hidden_states = self._get_pooled_hidden_states(hidden_states, batch["attention_mask"], method="mean")
 
