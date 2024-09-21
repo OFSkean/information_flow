@@ -48,5 +48,5 @@ output_file="${log_dir}/logs.out"
 error_file="${log_dir}/logs.err"
 
 SCRIPT="/home/ofsk222/projects/information_flow/experiments/mteb-harness.py"
-FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer --base_results_path experiments/results"
+FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer --base_results_path experiments/results --purpose run_tasks"
 srun --output="$output_file" --error="$error_file" singularity run --nv $CONTAINER $FULL_SCRIPT

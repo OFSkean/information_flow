@@ -32,7 +32,8 @@ def parse_args():
     parser.add_argument('--revision', type=str, default='main')
     parser.add_argument('--evaluation_layer', type=int, default=-1, help='Layer to use for evaluation. -1 for the final layer. This is 0-indexed.')
     parser.add_argument('--base_results_path', type=str, default='experiments/results')
-    parser.add_argument('--purpose', type=str, default='run_entropy_metrics', choices=['run_tasks', 'run_entropy_metrics', 'download_datasets'])
+    parser.add_argument('--purpose', type=str, default='run_tasks', choices=['run_tasks', 'run_entropy_metrics', 'download_datasets'])
+    parser.add_argument('--raise_error', type=bool, default=False)
     return parser.parse_args()
 
 
@@ -65,12 +66,13 @@ def save_results(results, model_specs: ModelSpecifications, evaluation_metric_sp
 
 def calculate_and_save_layerwise_metrics(
     model,
-    tokenizer,
     model_specs: ModelSpecifications,
     evaluation_metric_specs: EvaluationMetricSpecifications,
     dataloader_kwargs: Dict[str, Any],
     base_results_path: str
 ):
+    tokenizer = model.tokenizer
+
     if evaluation_metric_specs.evaluation_metric == 'entropy':
         dataloader = get_dataloader(tokenizer, **dataloader_kwargs)
         compute_func_kwargs = {
@@ -118,17 +120,9 @@ def calculate_and_save_layerwise_metrics(
     save_results(results, model_specs, evaluation_metric_specs, dataloader_kwargs, base_results_path)
 
 
-def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.MTEB, args):
-    device = torch.device('cuda')
-    model_path = get_model_path(model_specs.model_family, model_specs.model_size)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModel.from_pretrained(model_path, 
-                                      output_hidden_states=True, 
-                                      torch_dtype=torch.bfloat16,
-                                      revision=model_specs.revision).to(device)
-
+def run_entropy_metrics(model, model_specs: ModelSpecifications, MTEB_evaluator: mteb.MTEB, args):
     task_datasets = [task.metadata.dataset['path'] for task in MTEB_evaluator.tasks]
-    metrics = ['infonce', 'dime', 'lidar', 'sentence-entropy', 'dataset-entropy', 'curvature']
+    metrics = ['infonce', 'dime', 'lidar', 'sentence-entropy', 'dataset-entropy']
     splits = ['train', 'test']
     for task_dataset, metric, split in product(task_datasets, metrics, splits):
         print(f"Running evaluation for {task_dataset} - {metric} - {split}")
@@ -136,7 +130,8 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
 
         dataloader_kwargs = {
             'dataset_name': task_dataset,
-            'split': split
+            'split': split,
+            'num_samples': 10000
         }
 
         # Check if results already exist
@@ -146,7 +141,7 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
             continue
         
         try:
-            calculate_and_save_layerwise_metrics(model, tokenizer, model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path)
+            calculate_and_save_layerwise_metrics(model, model_specs, evaluation_metric_specs, dataloader_kwargs, args.base_results_path)
         except Exception as e:
             print(f"Error running evaluation for {task_dataset} - {metric} - {split}: {str(e)}")
 
@@ -165,11 +160,11 @@ def main():
     reduced_mteb_eng_tasks = [task for task in mteb_eng if task.metadata.category != 'p2p']
     reduced_mteb_eng_tasks = [task for task in reduced_mteb_eng_tasks if task.metadata.type != 'Retrieval']
     evaluator = mteb.MTEB(tasks=reduced_mteb_eng_tasks)
+    
+    device_map = "auto" if model_family != 'bert' else None
+    model = AutoModelWrapper(model_specs, device_map=device_map, evaluation_layer_idx=evaluation_layer)
 
     if args.purpose == 'run_tasks': 
-        device_map = "auto" if model_family != 'bert' and args.purpose == 'run_tasks' else None
-        model = AutoModelWrapper(model_specs, device_map=device_map, evaluation_layer_idx=evaluation_layer)
-
         results_output_folder = f'{args.base_results_path}/{model_family}/{model_size}/{revision}/mteb/layer_{model.evaluation_layer_idx}'
         def custom_create_output_folder(*args):
             output_folder = Path(results_output_folder)
@@ -178,10 +173,10 @@ def main():
         
         encoding_kwargs = {'verbose': True}
         evaluator.create_output_folder = custom_create_output_folder
-        evaluator.run(model, kwargs=encoding_kwargs, output_folder='./mteb-results', raise_error=False, overwrite_results=False, verbosity=2)
+        evaluator.run(model, kwargs=encoding_kwargs, output_folder='./mteb-results', raise_error=args.raise_error, overwrite_results=False, verbosity=2)
 
     elif args.purpose == 'run_entropy_metrics':
-        run_entropy_metrics(model_specs, evaluator, args)
+        run_entropy_metrics(model, model_specs, evaluator, args)
 
     elif args.purpose == 'download_datasets':
         for task in evaluator.tasks:
