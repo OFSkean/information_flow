@@ -2,8 +2,8 @@
 
 #SBATCH --exclude=gvnodeb007
 
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=10
+#SBATCH --gres=gpu:2
+#SBATCH --cpus-per-task=20
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=4G   # memory per cpu-core
@@ -49,4 +49,4 @@ error_file="${log_dir}/logs.err"
 
 SCRIPT="/home/ofsk222/projects/information_flow/experiments/mteb-harness.py"
 FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer --base_results_path experiments/results --purpose run_tasks"
-srun --output="$output_file" --error="$error_file" singularity run --nv $CONTAINER $FULL_SCRIPT
+srun --output="$output_file" --error="$error_file" singularity run --app pytorch222 --nv $CONTAINER $FULL_SCRIPT

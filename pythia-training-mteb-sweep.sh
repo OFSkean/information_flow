@@ -16,7 +16,7 @@ for size in ${MODEL_SIZES[@]}; do
         for revision in "${REVISIONS[@]}"; do
             if [ $USE_SLURM -eq 1 ]; then
                 JOBNAME="step$revision-$layer"
-                sbatch -J JOBNAME slurm_submit.sh $MODEL_NAME $size $revision $layer
+                sbatch -J $JOBNAME slurm_submit.sh $MODEL_NAME $size $revision $layer
             else
                 echo "Running evaluation for $MODEL_NAME $size layer $layer"
                 python experiments/mteb-harness.py --model_family $MODEL_NAME --model_size $size --revision $revision --evaluation_layer $layer
