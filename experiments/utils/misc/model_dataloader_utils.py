@@ -14,7 +14,7 @@ import mteb
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 datasets = ['wikitext', 'ai-medical-dataset']
-model_types = ["cerebras", "Pythia", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert"]
+model_types = ["cerebras", "Pythia", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert", "LLM2Vec-mntp-unsup-simcse", "llama-instruct"]
 
 cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B', '6.7B', '13B'] # '13b' also exists but doesnt fit in 24G for bfloat16
 Pythia_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b']#, '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
@@ -23,6 +23,8 @@ mamba2_sizes = ['130m', '370m', '780m', '1.3b', '2.7b']
 bert_sizes = ['base', 'large']
 medical_llama3_sizes = ['8B'] # its only 8B model
 llama3_sizes = ['8B'] 
+LLM2Vec_sizes = ['8B']
+llama_instruct_sizes = ['8B']
 
 model_name_to_sizes = {
     'Pythia': Pythia_sizes,
@@ -31,7 +33,9 @@ model_name_to_sizes = {
     'mamba2': mamba2_sizes,
     'Medical-Llama3': medical_llama3_sizes,
     'Llama3': llama3_sizes,
-    'bert': bert_sizes
+    'bert': bert_sizes,
+    'LLM2Vec-mntp-unsup-simcse': LLM2Vec_sizes,
+    'llama-instruct': llama_instruct_sizes
 }
 
 
@@ -57,7 +61,13 @@ def get_model_path(name, size):
         return f"state-spaces/mamba2-{size}-hf" 
     elif name == "bert":
         assert size in bert_sizes
-        return f"bert-{size}-uncased"       
+        return f"bert-{size}-uncased"
+    elif name == "LLM2Vec":
+        assert size in LLM2Vec_sizes
+        return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-unsup-simcse"
+    elif name == "llama-instruct":
+        assert size in llama_instruct_sizes
+        return f"meta-llama/Meta-Llama-3-8B-Instruct"
 
 def get_dataloader(
         tokenizer, 
@@ -79,8 +89,12 @@ def get_dataloader(
             return "text"
         elif "sentences" in examples:
             return "sentences"
+        elif "query" in examples:
+            return "query"
+        elif "sentence1" in examples and "sentence2" in examples:
+            return "sentence1"
         else:
-            raise ValueError("No text or sentences column found in examples")
+            raise ValueError("No text or sentences column found in examples, valid columns: ", examples.keys())
 
     def general_tokenize_function(examples):
         data_key = find_data_key_in_examples(examples)
@@ -187,7 +201,7 @@ def get_dataloader(
         data_key = find_data_key_in_examples(dataset[0])
         if isinstance(dataset[0][data_key], list):
             # data is splits, choose the first split
-            sentences = [item for sublist in dataset[0][data_key] for item in sublist]
+            sentences = [item for item in dataset[0][data_key]]
             dataset = Dataset.from_dict({"text": sentences})
 
         num_samples = min(num_samples, len(dataset))

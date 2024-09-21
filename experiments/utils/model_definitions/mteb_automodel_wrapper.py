@@ -13,6 +13,7 @@ from torch.nn.utils.rnn import pad_sequence
 from ..misc.model_dataloader_utils import get_model_path, model_name_to_sizes
 from ..misc.batch_size_utils import find_optimal_batch_size
 
+
 class ModelSpecifications:
     def __init__(self, model_family, model_size, revision):
         self.model_family = model_family

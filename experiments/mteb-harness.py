@@ -128,7 +128,7 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
                                       revision=model_specs.revision).to(device)
 
     task_datasets = [task.metadata.dataset['path'] for task in MTEB_evaluator.tasks]
-    metrics = ['infonce', 'dime', 'lidar', 'sentence-entropy', 'dataset-entropy', 'curvature']
+    metrics = ['infonce', 'dime', 'lidar', 'sentence-entropy', 'dataset-entropy']
     splits = ['train', 'test']
     for task_dataset, metric, split in product(task_datasets, metrics, splits):
         print(f"Running evaluation for {task_dataset} - {metric} - {split}")
@@ -136,7 +136,8 @@ def run_entropy_metrics(model_specs: ModelSpecifications, MTEB_evaluator: mteb.M
 
         dataloader_kwargs = {
             'dataset_name': task_dataset,
-            'split': split
+            'split': split,
+            'num_samples': 10000
         }
 
         # Check if results already exist

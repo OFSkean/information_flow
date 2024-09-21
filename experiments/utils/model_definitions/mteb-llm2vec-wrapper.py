@@ -9,7 +9,7 @@ from mteb.encoder_interface import Encoder
 from mteb.model_meta import ModelMeta
 
 from mteb.models.instructions import task_to_instruction
-from .llm2vec import LLM2Vec
+from .llm2vecold import LLM2Vec
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
