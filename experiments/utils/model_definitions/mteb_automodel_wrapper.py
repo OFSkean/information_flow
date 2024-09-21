@@ -37,7 +37,7 @@ class AutoModelWrapper:
     def __init__(self, model_specs: ModelSpecifications, device_map="auto", evaluation_layer_idx: int = -1):
         model_path = get_model_path(model_specs.model_family, model_specs.model_size)
         self.model_path = model_path
-        
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -134,15 +134,25 @@ class AutoModelWrapper:
         else:
             return self.model
     
+    @property
+    def device(self):
+        return self._get_first_layer_device()
+    
+    def forward(self, **kwargs):
+        model_with_forward_pass = self._get_model_with_forward_pass()
+        return model_with_forward_pass(**kwargs)
+    
+    def __call__(self, **kwargs):
+        return self.forward(**kwargs)
+    
     @torch.no_grad()
     def _encode(self, dataloader, verbose=False) -> np.ndarray:
         encoded_batches = []
-        model_with_forward_pass = self._get_model_with_forward_pass()
 
         for batch in tqdm.tqdm(dataloader, total=len(dataloader), disable= not verbose):
             batch = {k: v.to(self._get_first_layer_device()) for k, v in batch.items()}
                 
-            outputs = model_with_forward_pass(**batch)
+            outputs = self.forward(**batch)
             hidden_states = outputs.hidden_states[self.evaluation_layer_idx]
             hidden_states = self._get_pooled_hidden_states(hidden_states, batch["attention_mask"], method="mean")
 
