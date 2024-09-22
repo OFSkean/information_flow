@@ -1,5 +1,5 @@
 #!/bin/bash
-USE_SLURM=0
+USE_SLURM=1
 
 MODEL_NAME="LLM2Vec-mntp-unsup-simcse"
 MODEL_SIZES=('8B')

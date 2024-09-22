@@ -60,7 +60,14 @@ class AutoModelWrapper:
 
         if 'llm2vec' in model_path.lower():
             MODEL_CLASS = LLM2Vec
-            FROM_PRETRAINED_KWARGS['peft_model_name_or_path'] = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-unsup-simcse"
+            if 'unsup' in model_specs.model_family.lower():
+                FROM_PRETRAINED_KWARGS['peft_model_name_or_path'] = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-unsup-simcse"
+            elif 'supervised' in model_specs.model_family.lower():
+                FROM_PRETRAINED_KWARGS['peft_model_name_or_path'] = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp-supervised"
+            elif model_specs.model_family.lower() == 'llm2vec-mntp':
+                pass
+            else:
+                raise ValueError(f"Model family {model_specs.model_family} not found")
         else:
             MODEL_CLASS = AutoModel
 

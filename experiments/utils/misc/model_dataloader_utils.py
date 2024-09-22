@@ -14,7 +14,17 @@ import mteb
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 datasets = ['wikitext', 'ai-medical-dataset']
-model_types = ["cerebras", "Pythia", "mamba", "mamba2", "Medical-Llama3", "Llama3", "bert", "LLM2Vec-mntp-unsup-simcse", "llama-instruct"]
+model_types = ["cerebras",
+                "Pythia", 
+                "mamba", 
+                "mamba2", 
+                "Medical-Llama3", 
+                "Llama3", 
+                "bert", 
+                "LLM2Vec-mntp-unsup-simcse", 
+                "LLM2Vec-mntp-supervised",
+                "LLM2Vec-mntp",
+                "llama-instruct"]
 
 cerebras_sizes = ['111M', '256M', '590M', '1.3B', '2.7B', '6.7B', '13B'] # '13b' also exists but doesnt fit in 24G for bfloat16
 Pythia_sizes = ['14m', '70m', '160m', '410m', '1b', '1.4b', '2.8b']#, '6.9b'] # '12b' also exists but doesnt fit in 24G for bfloat16
@@ -35,7 +45,9 @@ model_name_to_sizes = {
     'Llama3': llama3_sizes,
     'bert': bert_sizes,
     'LLM2Vec-mntp-unsup-simcse': LLM2Vec_sizes,
-    'llama-instruct': llama_instruct_sizes
+    'llama-instruct': llama_instruct_sizes,
+    'LLM2Vec-mntp-supervised': LLM2Vec_sizes,
+    'LLM2Vec-mntp': LLM2Vec_sizes,
 }
 
 
@@ -63,6 +75,12 @@ def get_model_path(name, size):
         assert size in bert_sizes
         return f"bert-{size}-uncased"
     elif name == 'LLM2Vec-mntp-unsup-simcse':
+        assert size in LLM2Vec_sizes
+        return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
+    elif name == 'LLM2Vec-mntp-supervised':
+        assert size in LLM2Vec_sizes
+        return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
+    elif name == 'LLM2Vec-mntp':
         assert size in LLM2Vec_sizes
         return f"McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
     elif name == "llama-instruct":

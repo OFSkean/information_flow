@@ -1,7 +1,7 @@
 #!/bin/bash
-USE_SLURM=1
+USE_SLURM=0
 
-MODEL_NAME="LLM2Vec-mntp-unsup-simcse"
+MODEL_NAME="LLM2Vec-mntp"
 MODEL_SIZES=('8B')
 MAX_LAYER=32
 REVISION="main"
