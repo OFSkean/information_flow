@@ -1,0 +1,44 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "MTEB Harness",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "experiments/mteb-harness.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--model_family", "LLM2Vec-mntp",
+                "--model_size", "8B",
+                "--revision", "main",
+                "--evaluation_layer", "1",
+                "--base_results_path", "experiments/results",
+                "--purpose", "run_tasks",
+                "--raise_error", "True"
+            ],
+            "justMyCode": false
+        }
+
+        {
+            "name": "MTEB Metrics",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "experiments/mteb-harness.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--model_family", "LLM2Vec-mntp-unsup-simcse",
+                "--model_size", "8B",
+                "--revision", "main",
+                "--evaluation_layer", "-1",
+                "--base_results_path", "experiments/results",
+                "--purpose", "run_entropy_metrics",
+                "--raise_error", "True"
+            ],
+            "justMyCode": false
+        }
+    ]
+}
