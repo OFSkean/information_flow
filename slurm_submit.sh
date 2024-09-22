@@ -31,13 +31,45 @@ if [ ! -L ~/.cache ]; then
     exit 1
 fi
 
-model_family="${1:-}"
-model_size="${2:-}"
-revision="${3:-}"
-layer="${4:-}"
+# Initialize variables with default empty values
+model_family=""
+model_size=""
+revision=""
+layer=""
+purpose=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --model_family)
+            model_family="$2"
+            shift 2
+            ;;
+        --model_size)
+            model_size="$2"
+            shift 2
+            ;;
+        --revision)
+            revision="$2"
+            shift 2
+            ;;
+        --layer)
+            layer="$2"
+            shift 2
+            ;;
+        --purpose)
+            purpose="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
 
 if [[ -z "$model_family" || -z "$model_size" || -z "$revision" || -z "$layer" ]]; then
-    echo "Usage: $0 <model_family> <model_size> <revision> <evaluation_layer>"
+    echo "Usage: $0 --model_family <model_family> --model_size <model_size> --revision <revision> --evaluation_layer <evaluation_layer> --purpose <purpose>"
     exit 1
 fi
 
@@ -48,5 +80,5 @@ output_file="${log_dir}/logs.out"
 error_file="${log_dir}/logs.err"
 
 SCRIPT="/home/ofsk222/projects/information_flow/experiments/mteb-harness.py"
-FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer --base_results_path experiments/results --purpose run_tasks"
+FULL_SCRIPT="python3 -u $SCRIPT --model_family $model_family --model_size $model_size --revision $revision --evaluation_layer $layer --base_results_path experiments/results --purpose $purpose"
 srun --output="$output_file" --error="$error_file" singularity run --app pytorch222 --nv $CONTAINER $FULL_SCRIPT
