@@ -1,0 +1,58 @@
+{
+  "dataset_revision": "d66bd1f72af766a5cc4b0ca5e00c162f89e8cc46",
+  "evaluation_time": 96.5400002002716,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.21",
+  "scores": {
+    "test": [
+      {
+        "cosine_accuracy": 0.9948316831683168,
+        "cosine_accuracy_threshold": 0.8259897232055664,
+        "cosine_ap": 0.7509071570257718,
+        "cosine_f1": 0.7114375655823716,
+        "cosine_f1_threshold": 0.8067842721939087,
+        "cosine_precision": 0.7483443708609272,
+        "cosine_recall": 0.678,
+        "dot_accuracy": 0.9924554455445544,
+        "dot_accuracy_threshold": 6686.9931640625,
+        "dot_ap": 0.5504705540703032,
+        "dot_f1": 0.546117769671704,
+        "dot_f1_threshold": 6294.70703125,
+        "dot_precision": 0.5701849836779108,
+        "dot_recall": 0.524,
+        "euclidean_accuracy": 0.9948217821782178,
+        "euclidean_accuracy_threshold": 50.90495300292969,
+        "euclidean_ap": 0.7495189732628644,
+        "euclidean_f1": 0.7137585661570901,
+        "euclidean_f1_threshold": 53.86454772949219,
+        "euclidean_precision": 0.7547380156075808,
+        "euclidean_recall": 0.677,
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.7678954641323401,
+        "manhattan_accuracy": 0.9949306930693069,
+        "manhattan_accuracy_threshold": 2488.308837890625,
+        "manhattan_ap": 0.7678954641323401,
+        "manhattan_f1": 0.7225403435710568,
+        "manhattan_f1_threshold": 2708.35546875,
+        "manhattan_precision": 0.753528773072747,
+        "manhattan_recall": 0.694,
+        "max_accuracy": 0.9949306930693069,
+        "max_ap": 0.7678954641323401,
+        "max_f1": 0.7225403435710568,
+        "max_precision": 0.7547380156075808,
+        "max_recall": 0.694,
+        "similarity_accuracy": 0.9948316831683168,
+        "similarity_accuracy_threshold": 0.8259897232055664,
+        "similarity_ap": 0.7509071570257718,
+        "similarity_f1": 0.7114375655823716,
+        "similarity_f1_threshold": 0.8067842721939087,
+        "similarity_precision": 0.7483443708609272,
+        "similarity_recall": 0.678
+      }
+    ]
+  },
+  "task_name": "SprintDuplicateQuestions"
+}
