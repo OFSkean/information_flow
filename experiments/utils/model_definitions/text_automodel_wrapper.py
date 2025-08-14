@@ -141,7 +141,7 @@ class TextLayerwiseAutoModelWrapper(BaseLayerwiseAutoModelWrapper):
         FROM_PRETRAINED_KWARGS = {
             'revision': self.model_specs.revision,
             'config': self.config,
-            'torch_dtype': torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+            'torch_dtype': torch.float16,
             'device_map': self.device_map
         }
 

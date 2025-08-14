@@ -47,9 +47,16 @@ class PythiaLens(HFLM):
             pretrained,
             torch_dtype=dtype,
             trust_remote_code=True,
-            device_map='cuda:0',
+            device_map='auto' if torch.cuda.is_available() else None,
             revision='main'
         )
+
+        # If no CUDA available, manually move to appropriate device
+        if not torch.cuda.is_available():
+            if torch.backends.mps.is_available():
+                self._model = self._model.to('mps')
+            else:
+                self._model = self._model.to('cpu')
 
         print(self.evaluation_layer, self.config.num_hidden_layers)
         if self.lens_type == 'tuned':
