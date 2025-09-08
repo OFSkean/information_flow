@@ -1,0 +1,13 @@
+# Git dependencies that need to be installed separately
+# These are not managed by Poetry due to licensing issues
+
+# Apple ML AIM models
+git+https://github.com/apple/ml-aim.git#subdirectory=aim-v1
+git+https://github.com/apple/ml-aim.git#subdirectory=aim-v2
+
+# Representation ITL
+-e git+https://github.com/uk-cliplab/representation-itl.git#egg=representation_itl
+
+# Other git dependencies from original requirements.txt
+# -e git+https://github.com/EleutherAI/lm-evaluation-harness.git@0f944779d5f37f74480664da71a4ee301f62d013#egg=lm-eval
+# -e git+https://github.com/AlignmentResearch/tuned-lens#egg=tuned_lens

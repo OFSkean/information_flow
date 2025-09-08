@@ -1,0 +1,40 @@
+[project]
+name = "information-flow"
+version = "0.1.0"
+description = "Information flow analysis for embeddings"
+authors = [
+    {name = "Oscar Skean"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "accelerate (==0.31.0)",
+    "dadapy (==0.3.2)",
+    "datasets (==2.19.1)",
+    "frozenlist (==1.4.1)",
+    "ipykernel (==6.29.3)",
+    "ipython (==8.24.0)",
+    "llm2vec (==0.2.2)",
+    "matplotlib (==3.8.4)",
+    "mteb (==1.14.19)",
+    "networkx (==3.3)",
+    "nlpaug (==1.1.11)",
+    "nltk (==3.9.1)",
+    "numpy (==1.26.4)",
+    "pandas (==2.2.2)",
+    "peft (==0.11.1)",
+    "torch (==2.3.0)",
+    "torchsummary (==1.5.1)",
+    "tqdm (==4.66.4)",
+    "transformers (==4.40.2)",
+    "umap-learn (==0.5.6)",
+    "timm (==1.0.11)",
+    "omegaconf (>=2.3.0,<3.0.0)",
+    "lightning (>=2.5.5,<3.0.0)"
+]
+
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
