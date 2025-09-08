@@ -3,6 +3,7 @@ import os
 from itertools import product
 from pathlib import Path
 import mteb
+import torch
 
 from experiments.utils.model_definitions.text_automodel_wrapper import TextModelSpecifications, TextLayerwiseAutoModelWrapper
 from experiments.utils.metrics.metric_calling import EvaluationMetricSpecifications, calculate_and_save_layerwise_metrics
@@ -126,7 +127,14 @@ def main():
     # if BERT, we need to manually move the model to the device because the device map is not supported
     # https://github.com/huggingface/transformers/issues/25296
     if model_family == 'bert':
-        model.model = model.model.to("cuda:0")
+        # Use device-agnostic approach for compatibility with different systems
+        if torch.cuda.is_available():
+            device = "cuda:0"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+        model.model = model.model.to(device)
 
     if args.purpose == 'run_tasks': 
         results_output_folder = f'{args.base_results_path}/{model_family}/{model_size}/{revision}/mteb/layer_{model.evaluation_layer_idx}'

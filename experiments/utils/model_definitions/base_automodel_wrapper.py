@@ -86,7 +86,15 @@ class BaseLayerwiseAutoModelWrapper:
         elif hasattr(self.model, 'model') and hasattr(self.model.model, 'device'):
             return {'device': self.model.model.device}
         else:
-            return {'device': 'cuda:0'} #pray
+            # Use device-agnostic fallback instead of hardcoded CUDA
+            import torch
+            if torch.cuda.is_available():
+                device = 'cuda:0'
+            elif torch.backends.mps.is_available():
+                device = 'mps'
+            else:
+                device = 'cpu'
+            return {'device': device} #pray
     
     def _get_first_layer_device(self):
         device_map = self._get_hf_device_map()
